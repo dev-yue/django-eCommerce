@@ -9,3 +9,4 @@ htmlcov/
 schema.yml
 *-commands.md
 htmlcov/
+.DS_store
