@@ -50,44 +50,6 @@ class Product(models.Model):
         return self.name
 
 
-class ProductLine(models.Model):
-    price = models.DecimalField(decimal_places=2, max_digits=5)
-    sku = models.CharField(max_length=10)
-    stock_qty = models.IntegerField()
-    product = models.ForeignKey(
-        Product, on_delete=models.PROTECT, related_name="product_line"
-    )
-    is_active = models.BooleanField(default=False)
-    order = OrderField(unique_for_field="product", blank=True)
-    weight = models.FloatField()
-    attribute_value = models.ManyToManyField(
-        "AttributeValue",
-        through="ProductLineAttributeValue",
-        related_name="product_line_attribute_value",
-    )
-    product_type = models.ForeignKey(
-        "ProductType", on_delete=models.PROTECT, related_name="product_line_type"
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-    )
-    objects = IsActiveQueryset.as_manager()
-
-    def clean(self, exclude=None):
-        qs = ProductLine.objects.filter(product=self.product)
-        for obj in qs:
-            if self.id != obj.id and self.order == obj.order:
-                raise ValidationError("Duplicate Error")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super(ProductLine, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return str(self.sku)
-
-
 class Attribute(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
@@ -113,28 +75,13 @@ class ProductAttributeValue(models.Model):
         related_name="product_value_av",
     )
     product = models.ForeignKey(
-        Product,
+        "Product",
         on_delete=models.CASCADE,
-        related_name="product_value_pl",
+        related_name="producte_value_pl",
     )
 
     class Meta:
         unique_together = ("attribute_value", "product")
-
-    def clean(self):
-        qs = (
-            ProductAttributeValue.objects.filter(attribute_value=self.attribute_value)
-            .filter(product=self.product)
-            .exists()
-        )
-
-        if not qs:
-            iqs = Attribute.objects.filter(
-                attribute_value__product_attribute_value=self.product
-            ).values_list("pk", flat=True)
-
-            if self.attribute_value.attribute.id in list(iqs):
-                raise ValidationError("Duplicate attribute exists")
 
 
 class ProductLineAttributeValue(models.Model):
@@ -144,7 +91,7 @@ class ProductLineAttributeValue(models.Model):
         related_name="product_attribute_value_av",
     )
     product_line = models.ForeignKey(
-        ProductLine,
+        "ProductLine",
         on_delete=models.CASCADE,
         related_name="product_attribute_value_pl",
     )
@@ -174,6 +121,44 @@ class ProductLineAttributeValue(models.Model):
         return super(ProductLineAttributeValue, self).save(*args, **kwargs)
 
 
+class ProductLine(models.Model):
+    price = models.DecimalField(decimal_places=2, max_digits=5)
+    sku = models.CharField(max_length=10)
+    stock_qty = models.IntegerField()
+    product = models.ForeignKey(
+        Product, on_delete=models.PROTECT, related_name="product_line"
+    )
+    is_active = models.BooleanField(default=False)
+    order = OrderField(unique_for_field="product", blank=True)
+    weight = models.FloatField()
+    attribute_value = models.ManyToManyField(
+        AttributeValue,
+        through="ProductLineAttributeValue",
+        related_name="product_line_attribute_value",
+    )
+    product_type = models.ForeignKey(
+        "ProductType", on_delete=models.PROTECT, related_name="product_line_type"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        editable=False,
+    )
+    objects = IsActiveQueryset.as_manager()
+
+    def clean(self):
+        qs = ProductLine.objects.filter(product=self.product)
+        for obj in qs:
+            if self.id != obj.id and self.order == obj.order:
+                raise ValidationError("Duplicate value.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super(ProductLine, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return str(self.sku)
+
+
 class ProductImage(models.Model):
     alternative_text = models.CharField(max_length=100)
     url = models.ImageField(upload_to=None, default="test.jpg")
@@ -186,7 +171,7 @@ class ProductImage(models.Model):
         qs = ProductImage.objects.filter(product_line=self.product_line)
         for obj in qs:
             if self.id != obj.id and self.order == obj.order:
-                raise ValidationError("Duplicate Error")
+                raise ValidationError("Duplicate value.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -206,10 +191,11 @@ class ProductType(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class ProductTypeAttribute(models.Model):
+
     product_type = models.ForeignKey(
         ProductType,
         on_delete=models.CASCADE,
