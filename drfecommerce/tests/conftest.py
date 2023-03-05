@@ -5,23 +5,22 @@ from rest_framework.test import APIClient
 from .factories import (
     AttributeFactory,
     AttributeValueFactory,
-    BrandFactory,
     CategoryFactory,
     ProductFactory,
     ProductImageFactory,
+    ProductLineAttributeValueFactory,
     ProductLineFactory,
     ProductTypeFactory,
 )
 
-
-register(AttributeFactory)
-register(AttributeValueFactory)
 register(CategoryFactory)
-register(BrandFactory)
 register(ProductFactory)
 register(ProductLineFactory)
 register(ProductImageFactory)
 register(ProductTypeFactory)
+register(AttributeFactory)
+register(AttributeValueFactory)
+register(ProductLineAttributeValueFactory)
 
 
 @pytest.fixture
